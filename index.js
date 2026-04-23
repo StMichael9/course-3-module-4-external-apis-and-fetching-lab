@@ -44,7 +44,7 @@ const fetchWeatherAlerts = async (state) => {
     return parse;
   } catch (e) {
     console.error("Error:", e);
-    return { features: [] };
+    throw e;
   }
 };
 
