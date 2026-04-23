@@ -3,26 +3,43 @@ const weatherApi = "https://api.weather.gov/alerts/active?area=";
 
 // Your code here!
 const button = document.getElementById("fetch-alerts");
+const errorDiv = document.getElementById("error-message");
+
 button.addEventListener("click", async () => {
   const handleInput = document.getElementById("state-input");
   const value = handleInput.value;
   const result = value.trim().toUpperCase();
 
   if (!result) {
-    throw new Error("Please enter a state abbreviation");
+    errorDiv.classList.remove("hidden");
+    errorDiv.textContent = "Please enter a state abbreviation";
+    return;
   }
-  const data = await fetchWeatherAlerts(result);
 
-  displayAlerts(data);
+  try {
+    const data = await fetchWeatherAlerts(result);
+
+    errorDiv.classList.add("hidden");
+    errorDiv.textContent = "";
+
+    displayAlerts(data);
+
+    handleInput.value = "";
+  } catch (e) {
+    errorDiv.classList.remove("hidden");
+    errorDiv.textContent = e.message;
+  }
 });
 
 const fetchWeatherAlerts = async (state) => {
   try {
     const url = weatherApi + state;
     const res = await fetch(url);
+
     if (!res.ok) {
-      throw new Error("Failed");
+      throw new Error("Network issue");
     }
+
     const parse = await res.json();
     return parse;
   } catch (e) {
@@ -34,23 +51,33 @@ const fetchWeatherAlerts = async (state) => {
 const displayAlerts = (data) => {
   const alertsDiv = document.getElementById("alerts-display");
   alertsDiv.innerHTML = "";
+
   const features = data.features;
+
   if (!features || features.length === 0) {
     alertsDiv.innerHTML = "<p>No active alerts at this time.</p>";
     return;
   }
+
+  alertsDiv.innerHTML = `<h2>Weather Alerts: ${features.length}</h2>`;
+
   features.forEach((alert) => {
-    const info = alert.properties;
+    const info = alert.properties || alert;
+
+    const headline = info.headline || info.title;
+    const severity = info.severity;
+    const area = info.areaDesc || info.area;
+    const description = info.description;
 
     const alertCard = document.createElement("div");
     alertCard.classList.add("alert-card");
 
     alertCard.innerHTML = `
-    <h3>${info.headline}</h3>
-    <p><strong>Severity:</strong> ${info.severity}</p>
-    <p><strong>Area:</strong> ${info.areaDesc}</p>
-    <p>${info.description}</p>
-  `;
+      <h3>${headline}</h3>
+      <p><strong>Severity:</strong> ${severity}</p>
+      <p><strong>Area:</strong> ${area}</p>
+      <p>${description}</p>
+    `;
 
     alertsDiv.appendChild(alertCard);
   });
