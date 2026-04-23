@@ -16,9 +16,10 @@ const fetchWeatherAlerts = async (state) => {
   try {
     const url = weatherApi + state;
     const res = await fetch(url);
-    if (res.ok) {
+    if (!res.ok) {
       throw new Error("Failed");
     }
+    const parse = await res.json();
   } catch (e) {
     console.error("Error:", e);
   }
